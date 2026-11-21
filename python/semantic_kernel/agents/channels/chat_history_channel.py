@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING, Any, ClassVar, Deque
 
 from semantic_kernel.agents.channels.agent_channel import AgentChannel
 from semantic_kernel.contents import ChatMessageContent
+from semantic_kernel.contents.audio_content import AudioContent
+from semantic_kernel.contents.binary_content import BinaryContent
 from semantic_kernel.contents.chat_history import ChatHistory
 from semantic_kernel.contents.function_call_content import FunctionCallContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
@@ -36,6 +38,8 @@ class ChatHistoryChannel(AgentChannel, ChatHistory):
     thread: "ChatHistoryAgentThread"
 
     ALLOWED_CONTENT_TYPES: ClassVar[tuple[type, ...]] = (
+        AudioContent,
+        BinaryContent,
         ImageContent,
         FunctionCallContent,
         FunctionResultContent,

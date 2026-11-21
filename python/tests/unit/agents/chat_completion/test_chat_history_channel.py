@@ -7,6 +7,8 @@ import pytest
 
 from semantic_kernel.agents.agent import AgentResponseItem
 from semantic_kernel.agents.channels.chat_history_channel import ChatHistoryChannel
+from semantic_kernel.contents.audio_content import AudioContent
+from semantic_kernel.contents.binary_content import BinaryContent
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.file_reference_content import FileReferenceContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
@@ -250,3 +252,25 @@ async def test_receive_skips_file_references(chat_history_channel):
     assert len(channel.messages[2].items) == 2
     assert channel.messages[2].items[0].result == "normal content 2"
     assert channel.messages[2].items[1].text == "Normal message"
+
+
+async def test_receive_keeps_audio_and_binary_payloads(chat_history_channel):
+    channel = chat_history_channel
+
+    audio_message = ChatMessageContent(
+        role=AuthorRole.USER,
+        items=[AudioContent(data=b"audio-bytes", mime_type="audio/wav")],
+    )
+    binary_message = ChatMessageContent(
+        role=AuthorRole.USER,
+        items=[BinaryContent(data=b"binary-bytes", mime_type="application/pdf")],
+    )
+    file_reference_message = ChatMessageContent(role=AuthorRole.USER, items=[FileReferenceContent()])
+
+    await channel.receive([audio_message, binary_message, file_reference_message])
+
+    assert len(channel.messages) == 2
+    assert isinstance(channel.messages[0].items[0], AudioContent)
+    assert channel.messages[0].items[0].data == b"audio-bytes"
+    assert isinstance(channel.messages[1].items[0], BinaryContent)
+    assert channel.messages[1].items[0].data == b"binary-bytes"
