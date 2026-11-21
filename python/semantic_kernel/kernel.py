@@ -154,16 +154,22 @@ class Kernel(KernelFilterExtension, KernelFunctionExtension, KernelServicesExten
                 yield stream_message
 
         if return_function_results:
-            output_function_result: list["StreamingContentMixin"] = []
+            # Merge by choice_index: stream messages may arrive as lists of contents (connector
+            # shape) or as single contents (native stream methods), and not necessarily in
+            # ascending choice_index order.
+            output_function_result: dict[int, "StreamingContentMixin"] = {}
             for result in function_result:
-                for choice in result:
+                for choice in result if isinstance(result, (list, tuple)) else [result]:
                     if not isinstance(choice, StreamingContentMixin):
                         continue
-                    if len(output_function_result) <= choice.choice_index:
-                        output_function_result.append(copy(choice))
-                    else:
+                    if choice.choice_index in output_function_result:
                         output_function_result[choice.choice_index] += choice
-            yield FunctionResult(function=function.metadata, value=output_function_result)
+                    else:
+                        output_function_result[choice.choice_index] = copy(choice)
+            yield FunctionResult(
+                function=function.metadata,
+                value=[output_function_result[index] for index in sorted(output_function_result)],
+            )
 
     async def invoke(
         self,
@@ -313,16 +319,22 @@ class Kernel(KernelFilterExtension, KernelFunctionExtension, KernelServicesExten
             yield stream_message
 
         if return_function_results:
-            output_function_result: list["StreamingContentMixin"] = []
+            # Merge by choice_index: stream messages may arrive as lists of contents (connector
+            # shape) or as single contents (native stream methods), and not necessarily in
+            # ascending choice_index order.
+            output_function_result: dict[int, "StreamingContentMixin"] = {}
             for result in function_result:
-                for choice in result:
+                for choice in result if isinstance(result, (list, tuple)) else [result]:
                     if not isinstance(choice, StreamingContentMixin):
                         continue
-                    if len(output_function_result) <= choice.choice_index:
-                        output_function_result.append(copy(choice))
-                    else:
+                    if choice.choice_index in output_function_result:
                         output_function_result[choice.choice_index] += choice
-            yield FunctionResult(function=function.metadata, value=output_function_result)
+                    else:
+                        output_function_result[choice.choice_index] = copy(choice)
+            yield FunctionResult(
+                function=function.metadata,
+                value=[output_function_result[index] for index in sorted(output_function_result)],
+            )
 
     async def invoke_function_call(
         self,
