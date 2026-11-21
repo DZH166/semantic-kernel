@@ -82,6 +82,15 @@ def test_date_matching_last_day_name_fail():
             plugin.date_matching_last_day_name("Non-existing-day")
 
 
+def test_date_matching_last_day_name_is_case_insensitive():
+    plugin = TimePlugin()
+
+    with mock.patch("datetime.date", wraps=datetime.date) as dt:
+        dt.today.return_value = test_mock_today
+        for day_name in ("Friday", "friday", "FRIDAY", " Friday "):
+            assert plugin.date_matching_last_day_name(day_name) == "Friday, 10 January, 2031"
+
+
 def test_utc_now():
     plugin = TimePlugin()
 
